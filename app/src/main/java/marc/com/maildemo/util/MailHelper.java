@@ -1,6 +1,7 @@
 package marc.com.maildemo.util;
 
 import android.content.Context;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -135,6 +136,10 @@ public class MailHelper {
 
 		// 连接服务器
 		Store store = ((MailApplication)mContext.getApplicationContext()).getStore();
+		if(store == null) {
+			Log.e("TAG", "getAllMail: store 为空 ",null );
+			return mailList;
+		}
 		// 打开文件夹
 		Folder folder = store.getFolder(folderName);
 		folder.open(Folder.READ_ONLY);

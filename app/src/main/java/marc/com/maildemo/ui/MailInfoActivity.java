@@ -1,5 +1,6 @@
 package marc.com.maildemo.ui;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
@@ -21,6 +22,8 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import butterknife.OnItemLongClick;
+import butterknife.OnLongClick;
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.functions.Consumer;
@@ -132,9 +135,22 @@ public class MailInfoActivity extends AppCompatActivity {
 			case R.id.btn_cancel:
 				break;
 			case R.id.btn_relay:
+				startActivity(new Intent(MailInfoActivity.this, EditEmailActivity.class)
+						.putExtra("EMAIL", mEmail).putExtra("TYPE", 1));
 				break;
 			case R.id.btn_holder:
 				break;
 		}
+	}
+
+	@OnLongClick({R.id.btn_relay})
+	public boolean onViewLongClicked(View view){
+		switch (view.getId()){
+			case R.id.btn_relay:
+				startActivity(new Intent(MailInfoActivity.this, EditEmailActivity.class)
+						.putExtra("EMAIL", mEmail).putExtra("TYPE", 2));
+				break;
+		}
+		return true;
 	}
 }

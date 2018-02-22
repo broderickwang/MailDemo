@@ -62,6 +62,7 @@ import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<Cursor> {
 
 	private static final String POP3HOST = "pop3host";
+	private static final String IMAPHOST = "imaphost";
 	private static final String SMTPHOST = "smtphost";
 	private static final String SAVEUSER = "saveuser";
 	private static final String AUTOLOGIN = "autologin";
@@ -107,8 +108,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 				.subscribe(new Consumer<Permission>() {
 					@Override
 					public void accept(Permission permission) throws Exception {
-						if(permission.granted){
-							Toast.makeText(mContext, "获取读取权限", Toast.LENGTH_SHORT).show();
+						if(!permission.granted){
+							Toast.makeText(mContext, "请给予手机内存读取权限，以免影响使用", Toast.LENGTH_SHORT).show();
 						}
 					}
 				});
@@ -157,27 +158,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 		getLoaderManager().initLoader(0, null, this);
 	}
 
-	private boolean mayRequestContacts() {
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-			return true;
-		}
-		if (checkSelfPermission(READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
-			return true;
-		}
-		if (shouldShowRequestPermissionRationale(READ_CONTACTS)) {
-			Snackbar.make(mEmailView, R.string.permission_rationale, Snackbar.LENGTH_INDEFINITE)
-					.setAction(android.R.string.ok, new View.OnClickListener() {
-						@Override
-						@TargetApi(Build.VERSION_CODES.M)
-						public void onClick(View v) {
-							requestPermissions(new String[]{READ_CONTACTS,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE}, REQUEST_READ_CONTACTS);
-						}
-					});
-		} else {
-			requestPermissions(new String[]{READ_CONTACTS}, REQUEST_READ_CONTACTS);
-		}
-		return false;
-	}
+
 
 	/**
 	 * Callback received when a permissions request has been completed.
@@ -202,15 +183,19 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 		PreferencesUtil.setSharedStringData(LoginActivity.this, USERNAME, mEmailView.getText().toString());
 		PreferencesUtil.setSharedStringData(LoginActivity.this, PASSWORD, mPasswordView.getText().toString());
 		PreferencesUtil.setSharedStringData(LoginActivity.this, POP3HOST, ConnectionUtil.getPOP3Host(mEmailView.getText().toString()));
+		PreferencesUtil.setSharedStringData(LoginActivity.this, IMAPHOST, ConnectionUtil.getIMAPHost(mEmailView.getText().toString()));
 		PreferencesUtil.setSharedStringData(LoginActivity.this, SMTPHOST, ConnectionUtil.getSMTPHost(mEmailView.getText().toString()));
 
 		Observable.just(mContext)
 				.map(new Function<Context, Store>() {
 					@Override
 					public Store apply(Context context) throws Exception {
-						return ConnectionUtil.login(PreferencesUtil.getSharedStringData(context,POP3HOST)
+						return /*ConnectionUtil.login(PreferencesUtil.getSharedStringData(context,POP3HOST)
 								,PreferencesUtil.getSharedStringData(context,USERNAME)
-								,PreferencesUtil.getSharedStringData(context,PASSWORD));
+								,PreferencesUtil.getSharedStringData(context,PASSWORD));*/
+								ConnectionUtil.loginWithIMap(PreferencesUtil.getSharedStringData(context,IMAPHOST)
+										,PreferencesUtil.getSharedStringData(context,USERNAME)
+										,PreferencesUtil.getSharedStringData(context,PASSWORD));
 					}
 				})
 				.subscribeOn(Schedulers.io())

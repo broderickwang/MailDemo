@@ -41,7 +41,7 @@
                     android:hint="@string/prompt_email"
                     android:inputType="textEmailAddress"
                     android:maxLines="1"
-                    android:text="broderick_wang@163.com"
+                    android:text="wangcd@smartncs.com"
                     android:singleLine="true"/>
 
             </android.support.design.widget.TextInputLayout>
@@ -57,7 +57,7 @@
                     android:hint="@string/prompt_password"
                     android:imeActionId="6"
                     android:imeActionLabel="@string/action_sign_in_short"
-                    android:text="Wg3213299"
+                    android:text="@bcd,123"
                     android:imeOptions="actionUnspecified"
                     android:inputType="textPassword"
                     android:maxLines="1"

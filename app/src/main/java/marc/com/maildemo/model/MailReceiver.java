@@ -22,6 +22,7 @@ import javax.mail.internet.MimeUtility;
 import javax.mail.util.ByteArrayDataSource;
 
 import marc.com.maildemo.util.TranCharset;
+import marc.com.maildemo.util.Util;
 
 /**
  * Created by chengda
@@ -238,10 +239,13 @@ public class MailReceiver implements Serializable {
 		if (contentType.indexOf("name") != -1) {
 			connName = true;
 		}
+		/* 邮件发送会发送一份纯文字的和一份HTML的，将纯文字的隐藏
 		if (part.isMimeType("text/plain") && !connName) {
 			String content = parseInputStream((InputStream) part.getContent());
 			mailContent.append(content);
-		} else if (part.isMimeType("text/html") && !connName) {
+		} else
+		 */
+		if (part.isMimeType("text/html") && !connName) {
 			html = true;
 			String content = parseInputStream((InputStream) part.getContent());
 			mailContent.append(content);
@@ -314,7 +318,11 @@ public class MailReceiver implements Serializable {
 		try {
 			while ((count = is.read(readByte)) != -1) {
 				if (charset == null) {
-					str.append(new String(readByte, 0, count, "UTF-8"));
+					String appendStr = new String(readByte,0,count,"UTF-8");
+					if(Util.isMessyCode(appendStr)){
+						appendStr = new String(readByte, 0, count, "gbk");
+					}
+					str.append(appendStr);//gbk 或者 utf-8
 				} else {
 					str.append(new String(readByte, 0, count, charset));
 				}

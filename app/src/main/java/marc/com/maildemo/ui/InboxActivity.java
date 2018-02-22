@@ -7,6 +7,7 @@ import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.View;
 
 import com.wang.avi.AVLoadingIndicatorView;
@@ -15,6 +16,12 @@ import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.mail.Folder;
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.Store;
+import javax.mail.internet.MimeMessage;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -82,6 +89,22 @@ public class InboxActivity extends AppCompatActivity {
 		mLoadingView.smoothToShow();
 
 		Observable.just(mContext)
+				.map(new Function<Context, List<Email>>() {
+					@Override
+					public List<Email> apply(Context context) throws Exception {
+						return getAllMail(mType);
+					}
+				})
+				.subscribeOn(Schedulers.io())
+				.observeOn(AndroidSchedulers.mainThread())
+				.subscribe(new Consumer<List<Email>>() {
+					@Override
+					public void accept(List<Email> emails) throws Exception {
+						mLoadingView.smoothToHide();
+					}
+				});
+
+		/*Observable.just(mContext)
 				.map(new Function<Context, List<MailReceiver>>() {
 					@Override
 					public List<MailReceiver> apply(Context context) throws Exception {
@@ -126,7 +149,7 @@ public class InboxActivity extends AppCompatActivity {
 					public void accept(List<Email> emails) throws Exception {
 						mLoadingView.smoothToHide();
 					}
-				});
+				});*/
 
 		mInMailList.setLayoutManager(new LinearLayoutManager(mContext));
 		mInMailList.setAdapter(mInboxListAdapter);
@@ -154,4 +177,54 @@ public class InboxActivity extends AppCompatActivity {
 			}
 		};
 	};
+
+	public List<Email> getAllMail(String folderName) throws MessagingException {
+		List<Email> mailList = new ArrayList<Email>();
+
+		// 连接服务器
+		Store store = ((MailApplication)mContext.getApplicationContext()).getStore();
+		if(store == null) {
+			Log.e("TAG", "getAllMail: store 为空 ",null );
+			return mailList;
+		}
+		// 打开文件夹
+		Folder folder = store.getFolder(folderName);
+		folder.open(Folder.READ_ONLY);
+		// 总的邮件数
+		int mailCount = folder.getMessageCount();
+		if (mailCount == 0) {
+			folder.close(true);
+			store.close();
+			return null;
+		} else {
+			// 取得所有的邮件
+			Message[] messages = folder.getMessages();
+			for (int i = 0; i < messages.length; i++) {
+				MailReceiver mailReceiver = new MailReceiver((MimeMessage) messages[i]);
+				Email email = new Email();
+				try {
+					email.setMessageID(mailReceiver.getMessageID());
+					email.setFrom(mailReceiver.getFrom());
+					email.setTo(mailReceiver.getMailAddress("TO"));
+					email.setCc(mailReceiver.getMailAddress("CC"));
+					email.setBcc(mailReceiver.getMailAddress("BCC"));
+					email.setSubject(mailReceiver.getSubject());
+					email.setSentdata(mailReceiver.getSentData());
+					email.setContent(mailReceiver.getMailContent());
+					email.setReplysign(mailReceiver.getReplySign());
+					email.setHtml(mailReceiver.isHtml());
+					email.setNews(mailReceiver.isNew());
+					email.setAttachments(mailReceiver.getAttachments());
+					email.setCharset(mailReceiver.getCharset());
+					mAttachmentsInputStreamsList.add(0,mailReceiver.getAttachmentsInputStreams());
+					mEmails.add(0,email);
+//								mInboxListAdapter.notifyDataSetChanged();
+					mHandler.obtainMessage(0).sendToTarget();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+			return mailList;
+		}
+	}
 }
