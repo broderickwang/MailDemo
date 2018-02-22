@@ -18,6 +18,13 @@ import javax.mail.Store;
 public class ConnectionUtil {
 	private static Store mStore = null;
 
+	/**
+	 * 以POP的方式登录邮箱服务器
+	 * @param host
+	 * @param user
+	 * @param password
+	 * @return
+	 */
 	public static Store login(String host,String user,String password){
 		//连接服务器
 		Session session = Session.getDefaultInstance(System.getProperties(),null);
@@ -43,9 +50,10 @@ public class ConnectionUtil {
 		//连接服务器
 		Properties properties = System.getProperties();
 		properties.setProperty("mail.store.protocol", "imap");
-		properties.setProperty("mail.imap.host", "imap.smartncs.com");
+		properties.setProperty("mail.imap.host", host);
 		properties.setProperty("mail.imap.port", "143");
 		final String[] us = user.split("@");
+		//认证不需要全名：例，wangcd@smartncs.com  name就是wangcd
 		Session session = Session.getInstance(properties,new javax.mail.Authenticator() {
 			protected javax.mail.PasswordAuthentication getPasswordAuthentication() {
 				return new javax.mail.PasswordAuthentication(us[0], password);
