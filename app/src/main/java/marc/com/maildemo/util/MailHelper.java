@@ -1,19 +1,26 @@
 package marc.com.maildemo.util;
 
 import android.content.Context;
+import android.os.Handler;
 import android.util.Log;
 
+import com.sun.mail.imap.IMAPFolder;
+
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import javax.mail.FetchProfile;
 import javax.mail.Folder;
 import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.Store;
+import javax.mail.UIDFolder;
 import javax.mail.internet.MimeMessage;
 
 import marc.com.maildemo.application.MailApplication;
+import marc.com.maildemo.model.Email;
 import marc.com.maildemo.model.MailReceiver;
 
 /**
@@ -160,5 +167,74 @@ public class MailHelper {
 			}
 			return mailList;
 		}
+	}
+
+	public List<Email> getAllMailsAndRefresh(String folderName, ArrayList<ArrayList<InputStream>> inputStreams
+			, List<Email> emails, Handler handler) throws MessagingException{
+		List<Email> mailList = new ArrayList<Email>();
+		// 连接服务器
+		Store store = ((MailApplication)mContext.getApplicationContext()).getStore();
+		if(store == null) {
+			Log.e("TAG", "getAllMail: store 为空 ",null );
+			return mailList;
+		}
+		// 打开文件夹
+		Folder folder = store.getFolder(folderName);
+		folder.open(Folder.READ_ONLY);
+		// 总的邮件数
+		int mailCount = folder.getMessageCount();
+		if (mailCount == 0) {
+			folder.close(true);
+			store.close();
+			return null;
+		} else {
+			// 取得所有的邮件
+			FetchProfile profile = new FetchProfile();
+			profile.add(UIDFolder.FetchProfileItem.UID);
+			profile.add(FetchProfile.Item.ENVELOPE);
+
+			if(folder instanceof IMAPFolder){
+				IMAPFolder inbox = (IMAPFolder) folder;
+				Message[] messages = inbox.getMessages();
+				for (int i = 0; i < messages.length; i++) {
+					try{
+						MimeMessage mimeMessage = (MimeMessage) messages[i];
+						/*String uid = inbox.getUID(mimeMessage);
+						System.out.println("uid=" + uid);
+						int UnreadMessageCount = inbox.getUnreadMessageCount();
+						System.out.println("UnreadMessageCount="+UnreadMessageCount);
+						int NewMessageCount = inbox.getNewMessageCount();
+						System.out.println("NewMessageCount="+NewMessageCount);
+						URLName urlName = inbox.getURLName();
+						System.out.println("urlName="+urlName);*/
+						Email email = new Email();
+						MailReceiver mailReceiver = new MailReceiver(mimeMessage);
+
+						email.setMessageID(mailReceiver.getMessageID());
+						email.setFrom(mailReceiver.getFrom());
+						email.setTo(mailReceiver.getMailAddress("TO"));
+						email.setCc(mailReceiver.getMailAddress("CC"));
+						email.setBcc(mailReceiver.getMailAddress("BCC"));
+						email.setSubject(mailReceiver.getSubject());
+						email.setSentdata(mailReceiver.getSentData());
+						email.setContent(mailReceiver.getMailContent());
+						email.setReplysign(mailReceiver.getReplySign());
+						email.setHtml(mailReceiver.isHtml());
+						email.setNews(mailReceiver.isNew());
+						email.setAttachments(mailReceiver.getAttachments());
+						email.setCharset(mailReceiver.getCharset());
+						inputStreams.add(0,mailReceiver.getAttachmentsInputStreams());
+						emails.add(0,email);
+						handler.obtainMessage(0).sendToTarget();
+					} catch (Exception e) {
+						e.printStackTrace();
+						return mailList;
+					}
+				}
+				return mailList;
+			}
+
+		}
+		return mailList;
 	}
 }

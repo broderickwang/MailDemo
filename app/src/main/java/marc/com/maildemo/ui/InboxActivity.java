@@ -10,6 +10,8 @@ import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 
+import com.sun.mail.imap.IMAPFolder;
+import com.sun.mail.pop3.POP3Folder;
 import com.wang.avi.AVLoadingIndicatorView;
 
 import java.io.InputStream;
@@ -17,10 +19,13 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.mail.FetchProfile;
 import javax.mail.Folder;
 import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.Store;
+import javax.mail.UIDFolder;
+import javax.mail.URLName;
 import javax.mail.internet.MimeMessage;
 
 import butterknife.BindView;
@@ -92,7 +97,10 @@ public class InboxActivity extends AppCompatActivity {
 				.map(new Function<Context, List<Email>>() {
 					@Override
 					public List<Email> apply(Context context) throws Exception {
-						return getAllMail(mType);
+						return /*getAllMailsByUID(mType)*/
+								MailHelper
+										.getInstance(mContext)
+										.getAllMailsAndRefresh(mType,mAttachmentsInputStreamsList,mEmails,mHandler);
 					}
 				})
 				.subscribeOn(Schedulers.io())
@@ -177,6 +185,74 @@ public class InboxActivity extends AppCompatActivity {
 			}
 		};
 	};
+
+	public List<Email> getAllMailsByUID(String folderName) throws MessagingException{
+		List<Email> mailList = new ArrayList<Email>();
+		// 连接服务器
+		Store store = ((MailApplication)mContext.getApplicationContext()).getStore();
+		if(store == null) {
+			Log.e("TAG", "getAllMail: store 为空 ",null );
+			return mailList;
+		}
+		// 打开文件夹
+		Folder folder = store.getFolder(folderName);
+		folder.open(Folder.READ_ONLY);
+		// 总的邮件数
+		int mailCount = folder.getMessageCount();
+		if (mailCount == 0) {
+			folder.close(true);
+			store.close();
+			return null;
+		} else {
+			// 取得所有的邮件
+			FetchProfile profile = new FetchProfile();
+			profile.add(UIDFolder.FetchProfileItem.UID);
+			profile.add(FetchProfile.Item.ENVELOPE);
+
+			if(folder instanceof IMAPFolder){
+				IMAPFolder inbox = (IMAPFolder) folder;
+				Message[] messages = inbox.getMessages();
+				for (int i = 0; i < messages.length; i++) {
+					try{
+						MimeMessage mimeMessage = (MimeMessage) messages[i];
+						/*String uid = inbox.getUID(mimeMessage);
+						System.out.println("uid=" + uid);
+						int UnreadMessageCount = inbox.getUnreadMessageCount();
+						System.out.println("UnreadMessageCount="+UnreadMessageCount);
+						int NewMessageCount = inbox.getNewMessageCount();
+						System.out.println("NewMessageCount="+NewMessageCount);
+						URLName urlName = inbox.getURLName();
+						System.out.println("urlName="+urlName);*/
+						Email email = new Email();
+						MailReceiver mailReceiver = new MailReceiver(mimeMessage);
+
+						email.setMessageID(mailReceiver.getMessageID());
+						email.setFrom(mailReceiver.getFrom());
+						email.setTo(mailReceiver.getMailAddress("TO"));
+						email.setCc(mailReceiver.getMailAddress("CC"));
+						email.setBcc(mailReceiver.getMailAddress("BCC"));
+						email.setSubject(mailReceiver.getSubject());
+						email.setSentdata(mailReceiver.getSentData());
+						email.setContent(mailReceiver.getMailContent());
+						email.setReplysign(mailReceiver.getReplySign());
+						email.setHtml(mailReceiver.isHtml());
+						email.setNews(mailReceiver.isNew());
+						email.setAttachments(mailReceiver.getAttachments());
+						email.setCharset(mailReceiver.getCharset());
+						mAttachmentsInputStreamsList.add(0,mailReceiver.getAttachmentsInputStreams());
+						mEmails.add(0,email);
+						mHandler.obtainMessage(0).sendToTarget();
+					} catch (Exception e) {
+						e.printStackTrace();
+						return mailList;
+					}
+				}
+				return mailList;
+			}
+
+		}
+		return mailList;
+	}
 
 	public List<Email> getAllMail(String folderName) throws MessagingException {
 		List<Email> mailList = new ArrayList<Email>();

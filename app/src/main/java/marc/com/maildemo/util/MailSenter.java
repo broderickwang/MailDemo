@@ -101,6 +101,7 @@ public class MailSenter {
             for (int i = 0; i < addrs.length; i++) {
                 to[i] = new InternetAddress(addrs[i]);
             }
+            //设置 收件人-TO 抄送人-CC 密送人-BCC
             message.addRecipients(Message.RecipientType.TO, to);
 
             message.setSubject(mailSubject); // 设置邮件主题
