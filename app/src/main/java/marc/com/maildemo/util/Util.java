@@ -3,6 +3,10 @@ package marc.com.maildemo.util;
 import android.content.Context;
 import android.content.Intent;
 
+import javax.mail.Folder;
+import javax.mail.MessagingException;
+import javax.mail.Store;
+
 /**
  * Created by chengda
  * Date: 2018/2/15
@@ -35,5 +39,20 @@ public class Util {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * 获取所有的文件夹
+	 * @param store
+	 * @return
+	 */
+	public Folder[] getAllFolders(Store store){
+		try {
+			Folder folder = store.getDefaultFolder();
+			return folder.list();
+		} catch (MessagingException e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 }
