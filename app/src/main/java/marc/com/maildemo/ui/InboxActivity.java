@@ -41,6 +41,7 @@ import marc.com.maildemo.adapter.InboxListAdapter;
 import marc.com.maildemo.application.MailApplication;
 import marc.com.maildemo.model.Email;
 import marc.com.maildemo.model.MailReceiver;
+import marc.com.maildemo.model.SimpleEmail;
 import marc.com.maildemo.util.MailHelper;
 import marc.com.multrecycleadapter.OnItemClickListner;
 
@@ -62,6 +63,8 @@ public class InboxActivity extends AppCompatActivity {
 
 	private List<Email> mEmails ;
 
+	private List<SimpleEmail> mSimpleEmails;
+
 	private Handler mHandler;
 
 	@Override
@@ -79,6 +82,7 @@ public class InboxActivity extends AppCompatActivity {
 		mContext = InboxActivity.this;
 		mAttachmentsInputStreamsList = new ArrayList<>();
 		mEmails = new ArrayList<>();
+		mSimpleEmails = new ArrayList<>();
 
 		mInboxListAdapter = new InboxListAdapter(mContext,null,R.layout.inbox_list_item);
 		mInboxListAdapter.setOnClickListner(new OnItemClickListner() {
@@ -89,7 +93,7 @@ public class InboxActivity extends AppCompatActivity {
 				startActivity(intent);
 			}
 		});
-		mInboxListAdapter.setmDatas(mEmails);
+		mInboxListAdapter.setmDatas(mSimpleEmails);
 
 		mLoadingView.smoothToShow();
 
@@ -100,7 +104,8 @@ public class InboxActivity extends AppCompatActivity {
 						return /*getAllMailsByUID(mType)*/
 								MailHelper
 										.getInstance(mContext)
-										.getAllMailsAndRefresh(mType,mAttachmentsInputStreamsList,mEmails,mHandler);
+										.getAllMailsAndRefresh2(mType,mAttachmentsInputStreamsList
+												,mEmails,mSimpleEmails,mHandler);
 					}
 				})
 				.subscribeOn(Schedulers.io())

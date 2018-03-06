@@ -7,6 +7,7 @@ import java.util.List;
 
 import marc.com.maildemo.R;
 import marc.com.maildemo.model.Email;
+import marc.com.maildemo.model.SimpleEmail;
 import marc.com.multrecycleadapter.CommonRecycleAdapter;
 import marc.com.multrecycleadapter.ViewHolder;
 
@@ -18,17 +19,17 @@ import marc.com.multrecycleadapter.ViewHolder;
  * Description:
  * Email:wangchengda1990@gmail.com
  **/
-public class InboxListAdapter extends CommonRecycleAdapter<Email> {
-	public InboxListAdapter(Context context, List<Email> datas, int layoutId) {
+public class InboxListAdapter extends CommonRecycleAdapter<SimpleEmail> {
+	public InboxListAdapter(Context context, List<SimpleEmail> datas, int layoutId) {
 		super(context, datas, layoutId);
 	}
 
 	@Override
-	public void convert(ViewHolder holder, Email item) {
+	public void convert(ViewHolder holder, SimpleEmail item) {
 		holder.setText(R.id.tv_from,item.getFrom());
-		holder.setText(R.id.tv_sentdate,item.getSentdata());
+		holder.setText(R.id.tv_sentdate,item.getSendTime());
 		holder.setText(R.id.tv_subject,item.getSubject());
-		if(item.isNews()){
+		if(item.isNew()){
 			holder.setVisibility(R.id.tv_new, View.VISIBLE);
 		}
 	}

@@ -201,7 +201,7 @@ public class MailReceiver implements Serializable {
 		Flags flags = ((Message) mimeMessage).getFlags();
 		Flags.Flag[] flag = flags.getSystemFlags();
 		for (int i = 0; i < flag.length; i++) {
-			if (flag[i] == Flags.Flag.SEEN) {
+			if (flag[i] != Flags.Flag.SEEN) {
 				isnew = true;
 				break;
 			}
